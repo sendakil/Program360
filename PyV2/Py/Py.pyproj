@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>d003fdb5-642c-4bea-9992-8ce48791daea</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Py.py</StartupFile>
+    <StartupFile>etl\face\face_reader.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

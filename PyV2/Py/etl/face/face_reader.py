@@ -1,7 +1,7 @@
 import cv2
 
 
-imagePath = "C:\\Program360\\Sample\\mp3.png"
+imagePath = "C:\\Program360\\Sample\\sen.png"
 cascPath = "C:\\Program360\\Sample\\haarcascade_frontface_default.xml"
 
 
