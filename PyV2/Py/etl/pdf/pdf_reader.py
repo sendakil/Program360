@@ -1,13 +1,13 @@
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     Author: Rajagopal Senthil Kumar
     Created Date:  01-Sep-2017
-    Modified Date: 01-Sep-2017
-    Purpose: Module to read pdf content and identify texts, images, figures, etc.,
+    Modified Date: 07-Sep-2017
+    Purpose: Python program to read images and text from PDF 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+from internal import Internal
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
@@ -21,14 +21,10 @@ import pyodbc
 import json
 
 
-class PdfReader(object):
-   
-
+class PdfReader(Internal):
+  
     no_of_objects=0
-    __author="Rajagopal senthil kumar, sendakil@yahoo.com"
-    __version="01.00.00"
-
-
+    
     def __init__(self,file_name="",extract_yes=0):
        PdfReader.no_of_objects+=1 
        self._pdf_resource=PDFResourceManager()
@@ -41,13 +37,6 @@ class PdfReader(object):
            self.loadPDFdocument(file_name)
            if extract_yes!=0:
                self.countLayoutObjects(extract_yes)
-
-    def getVersion(self):
-        return self.__version
-
-    def getAuthor(self):
-        return self.__author
-      
      
     def loadPDFdocument(self,file_name):
         try:
@@ -55,9 +44,7 @@ class PdfReader(object):
             self.pdf_document =open(file_name,'rb')
         except IOError:
             print("Error: Can\'t file or read data")
-        
-               
-      
+     
     def countLayoutObjects(self,extract_yes=0):
         
         for pdf_page in PDFPage.get_pages(self.pdf_document):
@@ -92,7 +79,6 @@ class PdfReader(object):
         except IOError:
               print("Error: Can\'t file or read data")
 
-
     def readTextFile(self,file_name):
         try:
             txt_file=open(file_name,"r+")
@@ -102,8 +88,6 @@ class PdfReader(object):
                 
         except IOError:
               print("Error: Can\'t file or read data")
-
-
 
     def saveMsSql(self,conn_str):
         try:
@@ -121,8 +105,6 @@ class PdfReader(object):
         except Exception:
              print("Error: MS Sql connection ")
 
-
-
     def readMsSql(self,conn_str):
         try:
          conn =pyodbc.connect(conn_str)
@@ -135,8 +117,6 @@ class PdfReader(object):
 
         except Exception:
              print("Error: MS Sql connection ")
-
-
 
     def saveJSON(self,file_name):
         try:
@@ -156,7 +136,6 @@ class PdfReader(object):
         except IOError:
               print("Error: Can\'t file or read data")
 
-
     def readJSON(self,file_name):
         try:
  
@@ -172,4 +151,4 @@ class PdfReader(object):
               print("Error: Can\'t file or read data")
 
 
-   
+#End of this Program#########################################################################################################   
