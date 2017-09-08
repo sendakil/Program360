@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>d003fdb5-642c-4bea-9992-8ce48791daea</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Py.py</StartupFile>
+    <StartupFile>etl\doc\doc_reader.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,6 +22,12 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="etl\doc\doc_reader.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="etl\doc\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="internal.py">
       <SubType>Code</SubType>
     </Compile>
@@ -44,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="etl\" />
+    <Folder Include="etl\doc\" />
     <Folder Include="etl\face\" />
     <Folder Include="etl\pdf\" />
   </ItemGroup>
