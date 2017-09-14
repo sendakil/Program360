@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>d003fdb5-642c-4bea-9992-8ce48791daea</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>etl\doc\doc_reader.py</StartupFile>
+    <StartupFile>Py.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,6 +22,15 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="analytics\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="bi\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="endec.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="etl\doc\doc_reader.py">
       <SubType>Code</SubType>
     </Compile>
@@ -49,6 +58,8 @@
     <Compile Include="Py.py" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="analytics\" />
+    <Folder Include="bi\" />
     <Folder Include="etl\" />
     <Folder Include="etl\doc\" />
     <Folder Include="etl\face\" />
