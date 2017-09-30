@@ -1,0 +1,295 @@
+#Region "Help:  Introduction to the script task"
+'The Script Task allows you to perform virtually any operation that can be accomplished in
+'a .Net application within the context of an Integration Services control flow. 
+
+'Expand the other regions which have "Help" prefixes for examples of specific ways to use
+'Integration Services features within this script task.
+#End Region
+
+
+#Region "Imports"
+Imports System
+Imports System.Data
+Imports System.Data.SqlClient
+Imports System.Data.OleDb
+Imports System.Math
+Imports Microsoft.SqlServer.Dts.Runtime
+#End Region
+
+'ScriptMain is the entry point class of the script.  Do not change the name, attributes,
+'or parent of this class.
+<Microsoft.SqlServer.Dts.Tasks.ScriptTask.SSISScriptTaskEntryPointAttribute()>
+<System.CLSCompliantAttribute(False)>
+Partial Public Class ScriptMain
+    Inherits Microsoft.SqlServer.Dts.Tasks.ScriptTask.VSTARTScriptObjectModelBase
+
+#Region "Help:  Using Integration Services variables and parameters in a script"
+    'To use a variable in this script, first ensure that the variable has been added to 
+    'either the list contained in the ReadOnlyVariables property or the list contained in 
+    'the ReadWriteVariables property of this script task, according to whether or not your
+    'code needs to write to the variable.  To add the variable, save this script, close this instance of
+    'Visual Studio, and update the ReadOnlyVariables and 
+    'ReadWriteVariables properties in the Script Transformation Editor window.
+    'To use a parameter in this script, follow the same steps. Parameters are always read-only.
+
+    'Example of reading from a variable:
+    ' startTime = Dts.Variables("System::StartTime").Value
+
+    'Example of writing to a variable:
+    ' Dts.Variables("User::myStringVariable").Value = "new value"
+
+    'Example of reading from a package parameter:
+    ' batchId = Dts.Variables("$Package::batchId").Value
+
+    'Example of reading from a project parameter:
+    ' batchId = Dts.Variables("$Project::batchId").Value
+
+    'Example of reading from a sensitive project parameter:
+    ' batchId = Dts.Variables("$Project::batchId").GetSensitiveValue()
+#End Region
+
+#Region "Help:  Firing Integration Services events from a script"
+    'This script task can fire events for logging purposes.
+
+    'Example of firing an error event:
+    ' Dts.Events.FireError(18, "Process Values", "Bad value", "", 0)
+
+    'Example of firing an information event:
+    ' Dts.Events.FireInformation(3, "Process Values", "Processing has started", "", 0, fireAgain)
+
+    'Example of firing a warning event:
+    ' Dts.Events.FireWarning(14, "Process Values", "No values received for input", "", 0)
+#End Region
+
+#Region "Help:  Using Integration Services connection managers in a script"
+    'Some types of connection managers can be used in this script task.  See the topic 
+    '"Working with Connection Managers Programatically" for details.
+
+    'Example of using an ADO.Net connection manager:
+    ' Dim rawConnection As Object = Dts.Connections("Sales DB").AcquireConnection(Dts.Transaction)
+    ' Dim myADONETConnection As SqlConnection = CType(rawConnection, SqlConnection)
+    ' <Use the connection in some code here, then release the connection>
+    ' Dts.Connections("Sales DB").ReleaseConnection(rawConnection)
+
+    'Example of using a File connection manager
+    ' Dim rawConnection As Object = Dts.Connections("Prices.zip").AcquireConnection(Dts.Transaction)
+    ' Dim filePath As String = CType(rawConnection, String)
+    ' <Use the connection in some code here, then release the connection>
+    ' Dts.Connections("Prices.zip").ReleaseConnection(rawConnection)
+#End Region
+
+    'This method is called when this script task executes in the control flow.
+    'Before returning from this method, set the value of Dts.TaskResult to indicate success or failure.
+    'To open Help, press F1.
+
+    Public Sub Main()
+
+        '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+        ' Survey Type JP FG PNS data loading
+        '
+        '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+        ' Declare Counter Statistics Variable
+
+        Dim IntCounter01 As Integer
+        Dim IntNoOfColumns As Integer
+
+        ' Declare Source Connection and SQL String Variable
+
+        Dim StrSurveyType As String
+        Dim StrSourceSQL As String
+        Dim StrQmapSQL As String
+        Dim StrSourceConn As String
+        Dim StrSourceDB As String
+
+        ' Declare Target Connection and SQL Variable
+
+        Dim StrInsertSQL As String
+        'Dim StrTargetConn As String
+        Dim StrFinalQuery As String
+
+        ' Declare Source, Target , Command and Data Reader Variable
+
+        Dim ObjSourceConn As OleDbConnection
+        Dim ObjTargetConn As SqlConnection
+        Dim ObjSourceCmd As OleDbCommand
+        Dim ObjTargetCmd As SqlCommand
+        Dim ObjSourceRs As OleDbDataReader
+        Dim ObjQMapRs1 As SqlDataReader
+
+        ' Variables to store data from Source DataReader 
+
+        Dim IntSurveyYear, IntBatchID As Integer
+        Dim StrPartitionKey, StrNMCCategory, StrNMCSubCategory, StrPoly, StrGradType, StrSchoolCode,
+            StrCourseCode, StrCourseDesc, StrNRIC _
+            As String
+        'Dim floAnswer As Double
+        Dim IntMsno As Integer
+        Dim StrQcode, StrQuestion As String
+
+        ' Variables to store data from Question Mapping DataReader 
+
+        Dim StrSurveyLevel, StrPartitionKeyCol, StrNMCCategoryCol, StrNMCSubCategoryCol, StrPolyCol, StrGradTypeCol, StrSchoolCodeCol,
+            StrCourseCodeCol, StrMsnoCol, StrNRICCol, StrCouseDescCol _
+            As String
+
+
+        ' Initialize Variables
+
+        IntSurveyYear = CInt(Dts.Variables("L_SurveyYear").Value)
+        IntBatchID = CInt(Dts.Variables("P_BatchID").Value)
+        StrSurveyType = "FG_PNS" ' Dts.Variables("L_SurveyType").Value.ToString()
+        StrSourceDB = Dts.Variables("L_SourceDB").Value.ToString()
+        StrSourceSQL = Dts.Variables("L_SourceSQL").Value.ToString()
+        StrSurveyLevel = "JP"
+
+        StrNMCCategoryCol = ""
+        StrNMCSubCategoryCol = ""
+        StrPolyCol = ""
+        StrSchoolCodeCol = ""
+        StrCourseCodeCol = ""
+        StrCouseDescCol = ""
+        StrNRICCol = ""
+        StrGradTypeCol = ""
+        StrPartitionKeyCol = ""
+        StrCourseDesc = ""
+        StrMsnoCol = ""
+        StrNRIC = ""
+
+
+        'StrSourceConn = "Provider=Microsoft.ACE.OLEDB.12.0; Data Source=" & StrSourceDB & "; Extended Properties=""Excel 12.0;HDR=Yes;""" & ";"
+
+        StrSourceConn = "dd"
+
+        ' Instantiate ObjectTargetCommand Variable
+
+        ObjTargetCmd = New SqlCommand
+
+        Try   ' Exception Begin
+
+            ' Acquire Object Target Connection
+
+            ObjTargetConn = CType(Dts.Connections("DAP-ADO.NET").AcquireConnection(Nothing), System.Data.SqlClient.SqlConnection)
+
+            ' Question Mapping SQL 
+
+            StrQmapSQL = " select top 1 NMC_Category," &
+                        " NMC_SUB_CATEGORY, POLY, GRAD_TYPE, School_Code, Course_Code, NRIC, " &
+                        " Question MSNO " &
+                        " From DAPSTGGA.STG_FG_PNS_Qmap Where survey_year = " & IntSurveyYear & " And Qcode ='msno'"
+
+            ' Assign SQL command and connection object to  Object Target Command 
+            ObjTargetCmd.Connection = ObjTargetConn
+            ObjTargetCmd.CommandText = StrQmapSQL
+
+            ' Read Question Mapping data from database into Data Reader Object 
+
+            ObjQMapRs1 = ObjTargetCmd.ExecuteReader()
+
+            If ObjQMapRs1.HasRows Then
+
+                Do While ObjQMapRs1.Read
+
+                    StrNMCCategoryCol = Replace(ObjQMapRs1.Item("NMC_Category").ToString(), ".", "#")
+                    StrNMCSubCategoryCol = Replace(ObjQMapRs1.Item("NMC_SUB_CATEGORY").ToString(), ".", "#")
+                    StrPolyCol = Replace(ObjQMapRs1.Item("POLY").ToString(), ".", "#")
+                    StrSchoolCodeCol = Replace(ObjQMapRs1.Item("School_Code").ToString(), ".", "#")
+                    StrCourseCodeCol = Replace(ObjQMapRs1.Item("Course_Code").ToString(), ".", "#")
+                    'StrNRICCol = Replace(ObjQMapRs1.Item("NRIC").ToString(), ".", "#")
+                    StrMsnoCol = Replace(ObjQMapRs1.Item("MSNO").ToString(), ".", "#")
+                    StrGradTypeCol = Replace(ObjQMapRs1.Item("GRAD_TYPE").ToString(), ".", "#")
+
+                Loop
+
+            End If
+
+            ' Read data from Excel Sheet
+
+            StrFinalQuery = "Select * from ges.fg_pns_" & CStr(IntSurveyYear) & "_jointpoly where [" & StrNMCCategoryCol & "] is not null "
+
+            ObjSourceConn = New OleDbConnection(StrSourceConn)
+            ObjSourceConn.Open()
+
+            ObjSourceCmd = New OleDbCommand(StrFinalQuery, ObjSourceConn)
+
+            ObjSourceRs = ObjSourceCmd.ExecuteReader()
+
+            ObjQMapRs1.Close()
+
+            If ObjSourceRs.HasRows Then
+
+                Do While ObjSourceRs.Read
+
+                    IntSurveyYear = IntSurveyYear
+                    IntMsno = CInt(ObjSourceRs.Item(StrMsnoCol))
+                    StrNMCCategory = ObjSourceRs.Item(StrNMCCategoryCol).ToString()
+                    StrPartitionKey = "Student|" & StrSurveyType & "|" & StrSurveyLevel & "|" & IntSurveyYear
+                    StrNMCSubCategory = ObjSourceRs.Item(StrNMCSubCategoryCol).ToString()
+                    StrPoly = ObjSourceRs.Item(StrPolyCol).ToString()
+                    StrSchoolCode = ObjSourceRs.Item(StrSchoolCodeCol).ToString()
+                    StrCourseCode = ObjSourceRs.Item(StrCourseCodeCol).ToString()
+                    'StrNRIC = ObjSourceRs.Item(StrNRICCol).ToString()
+
+                    StrGradType = ObjSourceRs.Item(StrGradTypeCol).ToString()
+
+                    IntNoOfColumns = ObjSourceRs.FieldCount
+
+                    For IntCounter01 = 7 To IntNoOfColumns - 1
+                        If (ObjSourceRs.GetName(IntCounter01) <> StrNRICCol) Then
+
+                            StrQcode = ObjSourceRs.GetName(IntCounter01)
+                            StrQuestion = Replace(ObjSourceRs.Item(IntCounter01).ToString(), "'", "`")
+
+                            StrInsertSQL = "Insert Into [dap].[DAPSTGGA].[STG_GES_JP_FG_PNS] ([RESPONDENT_RECORD_NUMBER], [SURVEY_YEAR] ,[SURVEY_LEVEL],[SURVEY_PARTITION_KEY] ,[SURVEY_TYPE] " &
+                            ",[NMC_CATEGORY],[NMC_SUB_CATEGORY] ,[POLY] ,[GRAD_TYPE] ,[SCHOOL_CODE],[COURSE_CODE]" &
+                            ",[QCODE] ,[ANSWER] ,[ETL_BATCH_ID] ) " &
+                            " Values (" & IntMsno & "," & IntSurveyYear & ",'" & StrSurveyLevel & "','" & StrPartitionKey & "','" & StrSurveyType & "','" &
+                            StrNMCCategory & "','" & StrNMCSubCategory & "','" & StrPoly & "','" & StrGradType & "','" & StrSchoolCode &
+                            "','" & StrCourseCode & "','" & StrQcode & "','" & StrQuestion & "'," & IntBatchID & ")"
+
+                            ' Write Data to Staging Table 
+
+                            ObjTargetCmd.CommandText = StrInsertSQL
+                            ObjTargetCmd.ExecuteNonQuery()
+
+                        End If
+
+                    Next
+
+                Loop
+
+            End If
+
+            Dts.TaskResult = ScriptResults.Success
+
+        Catch ex As Exception
+
+            Dts.TaskResult = ScriptResults.Failure
+
+        Finally
+
+            ObjQMapRs1 = Nothing
+            ObjSourceRs = Nothing
+            ObjTargetCmd = Nothing
+            ObjSourceCmd = Nothing
+            ObjSourceConn = Nothing
+
+        End Try
+
+
+
+    End Sub
+
+#Region "ScriptResults declaration"
+    'This enum provides a convenient shorthand within the scope of this class for setting the
+    'result of the script.
+
+    'This code was generated automatically.
+    Enum ScriptResults
+        Success = Microsoft.SqlServer.Dts.Runtime.DTSExecResult.Success
+        Failure = Microsoft.SqlServer.Dts.Runtime.DTSExecResult.Failure
+    End Enum
+
+#End Region
+
+End Class
